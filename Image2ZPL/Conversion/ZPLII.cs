@@ -61,7 +61,10 @@ namespace Image2ZPL.Conversion
                 unsafe
                 {
                     byte* pixelData = (byte*)data.Scan0.ToPointer();
-                    byte mask = (byte)(0xff << (data.Stride * 8 - dim.Width));
+                    int validBitsInLastByte = dim.Width % 8;
+                    byte mask = validBitsInLastByte == 0
+                        ? (byte)0xFF
+                        : (byte)(0xFF << (8 - validBitsInLastByte));
                     imagebytes = new byte[dim.Height][];
 
                     for (int x = 0; x < dim.Height; x++)
