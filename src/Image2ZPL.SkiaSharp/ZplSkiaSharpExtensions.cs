@@ -6,7 +6,7 @@ namespace Image2ZPL
     /// <summary>
     /// Converts SkiaSharp bitmaps into ZPL II graphic fields.
     /// </summary>
-    public static class ZplImageExtensions
+    public static class ZplSkiaSharpExtensions
     {
         /// <summary>
         /// Converts an <see cref="SKBitmap"/> into a ZPL II graphic field.
