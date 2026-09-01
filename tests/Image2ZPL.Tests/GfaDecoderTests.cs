@@ -1,3 +1,4 @@
+using System;
 using Image2ZPL.Tests.Infrastructure;
 using Xunit;
 
@@ -48,6 +49,8 @@ public class GfaDecoderTests
     [InlineData("Y8,", 19)]
     [InlineData("g8,", 20)]
     [InlineData("gG8,", 21)]
+    [InlineData("z8,", 400)]
+    [InlineData("zY8,", 419)]
     public void Decode_ExpandsRepeatCodes(string data, int expectedNibbles)
     {
         var field = GfaDecoder.Decode($"^FO0,0^GFA,220,220,220,{data}^FS");
@@ -58,5 +61,15 @@ public class GfaDecoderTests
             if (nibble == 0x8) count++;
         }
         Assert.Equal(expectedNibbles, count);
+    }
+
+    [Fact]
+    public void Decode_TruncatedDataThrows()
+    {
+        // Header promises 2 rows of 3 bytes each, but the data only
+        // describes a partial first row. A decoder that returns instead of
+        // throwing here would silently agree with a broken encoder, which
+        // is exactly the failure this test infrastructure exists to catch.
+        Assert.Throws<FormatException>(() => GfaDecoder.Decode("^FO0,0^GFA,6,6,3,C0^FS"));
     }
 }

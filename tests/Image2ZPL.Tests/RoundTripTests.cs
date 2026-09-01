@@ -13,7 +13,8 @@ namespace Image2ZPL.Tests;
 // parameters instead (a shape label, width, height, seed, black percent),
 // and the bitmap is built inside the test body via BitmapFactory. That
 // keeps the data serializable and gives readable per-case test names,
-// while covering exactly the same shapes the brief specified.
+// while covering the same shapes the brief specified plus SinglePixel,
+// added on review to close a gap in the original shape list.
 public enum Shape
 {
     WhiteSolid,
@@ -21,6 +22,7 @@ public enum Shape
     AlternatingRows,
     LongRun,
     Random,
+    SinglePixel,
 }
 
 public class RoundTripTests
@@ -33,6 +35,7 @@ public class RoundTripTests
             yield return new object[] { Shape.BlackSolid, width, 3, 0, 0 };
             yield return new object[] { Shape.AlternatingRows, width, 4, 0, 0 };
             yield return new object[] { Shape.LongRun, width, 2, 0, 0 };
+            yield return new object[] { Shape.SinglePixel, width, 3, 0, 0 };
             foreach (int density in new[] { 5, 50, 95 })
             {
                 yield return new object[] { Shape.Random, width, 5, width * density, density };
@@ -62,6 +65,7 @@ public class RoundTripTests
             Shape.BlackSolid => BitmapFactory.Solid(width, height, black: true),
             Shape.AlternatingRows => BitmapFactory.AlternatingRows(width, height),
             Shape.LongRun => BitmapFactory.LongRun(width, height),
+            Shape.SinglePixel => BitmapFactory.SinglePixel(width, height),
             Shape.Random => BitmapFactory.Random(width, height, seed, blackPercent),
             _ => throw new ArgumentOutOfRangeException(nameof(shape), shape, "Unknown shape."),
         };

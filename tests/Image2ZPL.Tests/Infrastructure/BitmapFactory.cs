@@ -57,15 +57,29 @@ internal static class BitmapFactory
     public static MonochromeBitmap LongRun(int width, int height)
     {
         // A long black run that stops short of the right edge, so the row
-        // cannot collapse to the all-black shortcut.
+        // cannot collapse to the all-black shortcut. Clamped to at least
+        // one pixel so narrow widths (1 through 4) are not vacuously
+        // identical to the all-white shape.
         var bitmap = new MonochromeBitmap(width, height);
+        int runWidth = Math.Max(1, width - 4);
         for (int y = 0; y < height; y++)
         {
-            for (int x = 0; x < width - 4; x++)
+            for (int x = 0; x < runWidth; x++)
             {
                 bitmap.SetBlack(x, y);
             }
         }
+        return bitmap;
+    }
+
+    public static MonochromeBitmap SinglePixel(int width, int height)
+    {
+        // Exactly one black pixel, at the bottom-right corner. That is the
+        // most interesting position for this library because it exercises
+        // right-edge padding and the final row together, the exact region
+        // the PR #3 clipping bug lived in.
+        var bitmap = new MonochromeBitmap(width, height);
+        bitmap.SetBlack(width - 1, height - 1);
         return bitmap;
     }
 

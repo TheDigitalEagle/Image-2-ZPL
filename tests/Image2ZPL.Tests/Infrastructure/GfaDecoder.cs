@@ -35,8 +35,20 @@ public static class GfaDecoder
 
         int cursor = gfa + "^GFA,".Length;
         int totalBytes = ReadInt(zpl, ref cursor);
-        ReadInt(zpl, ref cursor); // graphic field count, same value
+        int fieldCount = ReadInt(zpl, ref cursor);
         int bytesPerRow = ReadInt(zpl, ref cursor);
+
+        if (fieldCount != totalBytes)
+        {
+            throw new FormatException(
+                $"Graphic field count {fieldCount} does not match byte count {totalBytes}.");
+        }
+
+        if (totalBytes % bytesPerRow != 0)
+        {
+            throw new FormatException(
+                $"Byte count {totalBytes} is not an exact multiple of bytes per row {bytesPerRow}.");
+        }
 
         int end = zpl.IndexOf("^FS", cursor, StringComparison.Ordinal);
         string data = zpl.Substring(cursor, end - cursor);
@@ -81,6 +93,15 @@ public static class GfaDecoder
                 nibble = 0;
                 count = 0;
             }
+            else if (c >= 'a' && c <= 'f')
+            {
+                // ZPL hex data is uppercase, and our encoder only ever emits
+                // uppercase. A decoder more permissive than a printer would
+                // mask the same class of bug the completeness check below
+                // exists to catch, so reject it rather than silently
+                // accepting it as int.Parse's HexNumber style otherwise would.
+                throw new FormatException($"Lowercase hex digit '{c}' is not valid ZPL compression data.");
+            }
             else
             {
                 int value = int.Parse(c.ToString(), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
@@ -96,6 +117,12 @@ public static class GfaDecoder
                 }
                 count = 0;
             }
+        }
+
+        if (row != height || nibble != 0)
+        {
+            throw new FormatException(
+                $"Data described {row} complete rows plus {nibble} nibbles, expected {height} rows.");
         }
 
         return new DecodedField(bytesPerRow, rows);
