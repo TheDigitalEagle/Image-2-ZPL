@@ -35,11 +35,15 @@ public class GoldenFileTests
             new ZplImageOptions { Dither = mode });
 
         string path = Path.Combine("Golden", fileName);
-        if (Update || !File.Exists(path))
+        if (Update)
         {
             Directory.CreateDirectory("Golden");
             File.WriteAllText(path, actual);
         }
+
+        Assert.True(
+            File.Exists(path),
+            $"Golden file {path} is missing. Set IMAGE2ZPL_UPDATE_GOLDEN=1 to create it.");
 
         Assert.Equal(File.ReadAllText(path), actual);
     }

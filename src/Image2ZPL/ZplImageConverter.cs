@@ -25,7 +25,16 @@ namespace Image2ZPL
             ReadOnlySpan<byte> pixels, int width, int height, int stride,
             SourcePixelFormat format, ZplImageOptions? options = null)
         {
-            var builder = new StringBuilder();
+            // Output is at minimum two characters per source byte, so start
+            // well above the default capacity of 16 for anything but a tiny
+            // image. A bad width or height here still yields a small,
+            // positive fallback capacity, the real value is validated below.
+            long estimatedCapacity = 64L + ((long)width * height / 4);
+            int capacity = estimatedCapacity > 0 && estimatedCapacity <= int.MaxValue
+                ? (int)estimatedCapacity
+                : 64;
+
+            var builder = new StringBuilder(capacity);
             using (var writer = new StringWriter(builder, CultureInfo.InvariantCulture))
             {
                 WriteZpl(writer, pixels, width, height, stride, format, options);
@@ -37,6 +46,13 @@ namespace Image2ZPL
         /// Writes a ZPL graphic field directly to a writer. Prefer this over
         /// <see cref="ToZpl"/> for large images, which produce large strings.
         /// </summary>
+        /// <param name="writer">Destination for the ZPL text.</param>
+        /// <param name="pixels">Source pixel data, at least stride multiplied by height bytes.</param>
+        /// <param name="width">Image width in pixels.</param>
+        /// <param name="height">Image height in pixels.</param>
+        /// <param name="stride">Bytes per source row, including any padding.</param>
+        /// <param name="format">Layout of the source pixel data.</param>
+        /// <param name="options">Conversion settings, or null for the defaults.</param>
         public static void WriteZpl(
             TextWriter writer, ReadOnlySpan<byte> pixels, int width, int height, int stride,
             SourcePixelFormat format, ZplImageOptions? options = null)
@@ -76,6 +92,26 @@ namespace Image2ZPL
             if (options.Y < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(options), options.Y, "Y must not be negative. ZPL has no negative field origin.");
+            }
+
+            // Validated here, on the public boundary, rather than left to
+            // Halftoner.Apply. That defers the throw until after a full
+            // width * height grayscale pass, and reports the internal
+            // parameter name "mode" instead of "options". An explicit
+            // switch avoids the boxing Enum.IsDefined would cost on
+            // netstandard2.0.
+            switch (options.Dither)
+            {
+                case DitherMode.Threshold:
+                case DitherMode.FloydSteinberg:
+                case DitherMode.Atkinson:
+                case DitherMode.Ordered4x4:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(options),
+                        options.Dither,
+                        string.Format(CultureInfo.InvariantCulture, "Unknown dither mode {0}.", options.Dither));
             }
 
             // Throws for an unknown format, so call it before using stride.

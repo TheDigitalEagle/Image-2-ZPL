@@ -4,6 +4,12 @@
 * text=auto
 
 ###############################################################################
+# Golden test fixtures are compared byte for byte with File.ReadAllText and
+# have no trailing newline. Do not let line-ending normalization touch them.
+###############################################################################
+tests/Image2ZPL.Tests/Golden/*.zpl -text
+
+###############################################################################
 # Set default behavior for command prompt diff.
 #
 # This is need for earlier builds of msysgit that does not have it on by

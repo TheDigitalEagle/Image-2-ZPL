@@ -13,6 +13,6 @@
     <ProjectReference Include="../../src/Image2ZPL/Image2ZPL.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Golden/**" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

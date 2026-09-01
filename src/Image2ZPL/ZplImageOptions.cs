@@ -1,8 +1,8 @@
 namespace Image2ZPL
 {
     /// <summary>
-    /// Settings for a single image conversion. The defaults reproduce the
-    /// behaviour of version 1.x as closely as the new pipeline allows.
+    /// Settings for a single image conversion. The defaults are a fixed
+    /// threshold of 128 at the label origin, with compression on.
     /// </summary>
     public sealed class ZplImageOptions
     {
@@ -15,7 +15,7 @@ namespace Image2ZPL
         /// <summary>How the image is reduced to one bit per pixel.</summary>
         public DitherMode Dither { get; set; } = DitherMode.Threshold;
 
-        /// <summary>Pixels darker than this print as a dot. Ignored polarity aside by dithering modes, which use it as their decision point.</summary>
+        /// <summary>Decision point for every mode. A pixel whose value, after any dithering adjustment, falls below this prints as a dot.</summary>
         public byte Threshold { get; set; } = 128;
 
         /// <summary>Swaps black and white in the output.</summary>
