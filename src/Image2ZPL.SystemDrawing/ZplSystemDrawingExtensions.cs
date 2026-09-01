@@ -24,7 +24,13 @@ namespace Image2ZPL
             BitmapData data = bitmap.LockBits(area, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
             try
             {
-                var pixels = new byte[data.Stride * bitmap.Height];
+                if (data.Stride < 0)
+                {
+                    throw new NotSupportedException(
+                        "A bottom up bitmap (negative stride) is not supported. Clone the bitmap into a top down copy first.");
+                }
+
+                var pixels = new byte[data.Stride * data.Height];
                 System.Runtime.InteropServices.Marshal.Copy(data.Scan0, pixels, 0, pixels.Length);
 
                 return ZplImageConverter.ToZpl(
