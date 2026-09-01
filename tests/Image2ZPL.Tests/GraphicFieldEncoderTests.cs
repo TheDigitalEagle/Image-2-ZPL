@@ -80,6 +80,16 @@ public class GraphicFieldEncoderTests
         Assert.Equal("8,:", DataOf(Encode(bitmap, compress: true)));
     }
 
+    [Fact]
+    public void Compressed_OnlyRepeatsRowsThatActuallyMatch()
+    {
+        var bitmap = new MonochromeBitmap(16, 3);
+        bitmap.SetBlack(0, 0);
+        bitmap.SetBlack(8, 1);
+        bitmap.SetBlack(8, 2);
+        Assert.Equal("8,008,:", DataOf(Encode(bitmap, compress: true)));
+    }
+
     [Theory]
     [InlineData(1, "G")]
     [InlineData(19, "Y")]
@@ -100,8 +110,36 @@ public class GraphicFieldEncoderTests
         var bitmap = new MonochromeBitmap(240 * 8, 1);
         for (int x = 0; x < (240 * 8) - 4; x++) bitmap.SetBlack(x, 0);
         var data = DataOf(Encode(bitmap, compress: true));
-        Assert.Contains("zY", data);
-        Assert.DoesNotContain("^", data);
+        Assert.Equal("zYFiF,", data);
+    }
+
+    [Fact]
+    public void Compressed_RunOf420SplitsWithoutASpuriousCodeForTheRemainder()
+    {
+        // 211 bytes per row. Pixels 0 to 1679 black fills bytes 0 to 209,
+        // giving exactly 420 F nibbles, then byte 210 is zero.
+        var bitmap = new MonochromeBitmap(1688, 1);
+        for (int x = 0; x < 1680; x++) bitmap.SetBlack(x, 0);
+        Assert.Equal("zYFF,", DataOf(Encode(bitmap, compress: true)));
+    }
+
+    [Fact]
+    public void Compressed_RunOfTwoStaysLiteral()
+    {
+        var bitmap = new MonochromeBitmap(16, 1);
+        bitmap.SetBlack(0, 0);
+        bitmap.SetBlack(4, 0);
+        Assert.Equal("88,", DataOf(Encode(bitmap, compress: true)));
+    }
+
+    [Fact]
+    public void Compressed_RunOfThreeIsTheFirstToCompress()
+    {
+        var bitmap = new MonochromeBitmap(16, 1);
+        bitmap.SetBlack(0, 0);
+        bitmap.SetBlack(4, 0);
+        bitmap.SetBlack(8, 0);
+        Assert.Equal("I8,", DataOf(Encode(bitmap, compress: true)));
     }
 
     [Fact]
