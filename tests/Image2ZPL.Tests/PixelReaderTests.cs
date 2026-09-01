@@ -1,3 +1,4 @@
+using System;
 using Image2ZPL;
 using Image2ZPL.Internal;
 using Xunit;
@@ -65,5 +66,63 @@ public class PixelReaderTests
         var gray = PixelReader.ToGrayscale(pixels, 2, 1, 1, SourcePixelFormat.Mono1);
         Assert.Equal(0, gray[0]);
         Assert.Equal(255, gray[1]);
+    }
+
+    [Fact]
+    public void Bgra32_OpaquePureRed()
+    {
+        // Opaque pure red in BGRA order: {0, 0, 255, 255} must read as 76.
+        byte[] pixels = { 0, 0, 255, 255 };
+        var gray = PixelReader.ToGrayscale(pixels, 1, 1, 4, SourcePixelFormat.Bgra32);
+        Assert.Equal(76, gray[0]);
+    }
+
+    [Fact]
+    public void Bgra32_CompositesTransparencyOverWhite()
+    {
+        // Fully transparent black in BGRA order: {0, 0, 0, 0} must read as white.
+        byte[] pixels = { 0, 0, 0, 0 };
+        var gray = PixelReader.ToGrayscale(pixels, 1, 1, 4, SourcePixelFormat.Bgra32);
+        Assert.Equal(255, gray[0]);
+    }
+
+    [Theory]
+    [InlineData(SourcePixelFormat.Mono1, 8, 1)]
+    [InlineData(SourcePixelFormat.Mono1, 9, 2)]
+    [InlineData(SourcePixelFormat.Mono1, 10, 2)]
+    [InlineData(SourcePixelFormat.Mono1, 16, 2)]
+    [InlineData(SourcePixelFormat.Mono1, 17, 3)]
+    [InlineData(SourcePixelFormat.Grayscale8, 10, 10)]
+    [InlineData(SourcePixelFormat.Rgb24, 10, 30)]
+    [InlineData(SourcePixelFormat.Bgr24, 10, 30)]
+    [InlineData(SourcePixelFormat.Rgba32, 10, 40)]
+    [InlineData(SourcePixelFormat.Bgra32, 10, 40)]
+    public void MinimumStride_CalculatesCorrectly(SourcePixelFormat format, int width, int expectedStride)
+    {
+        var stride = PixelReader.MinimumStride(width, format);
+        Assert.Equal(expectedStride, stride);
+    }
+
+    [Fact]
+    public void BytesPerPixel_Mono1_Throws()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => PixelReader.BytesPerPixel(SourcePixelFormat.Mono1));
+        Assert.Contains("Mono1 is one bit per pixel", ex.Message);
+    }
+
+    [Fact]
+    public void BytesPerPixel_UnknownFormat_Throws()
+    {
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(() => PixelReader.BytesPerPixel((SourcePixelFormat)999));
+        Assert.Equal("format", ex.ParamName);
+    }
+
+    [Fact]
+    public void MinimumStride_Mono1_WorksWithoutCallingBytesPerPixel()
+    {
+        // This must work even though BytesPerPixel(Mono1) throws, because MinimumStride
+        // takes the ceiling path and never calls BytesPerPixel.
+        var stride = PixelReader.MinimumStride(10, SourcePixelFormat.Mono1);
+        Assert.Equal(2, stride);
     }
 }

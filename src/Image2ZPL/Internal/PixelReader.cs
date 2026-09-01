@@ -12,7 +12,10 @@ namespace Image2ZPL.Internal
         {
             switch (format)
             {
-                case SourcePixelFormat.Mono1: return 0; // sub-byte, handled separately
+                case SourcePixelFormat.Mono1:
+                    throw new NotSupportedException(
+                        "Mono1 is one bit per pixel and has no whole-byte size. Use MinimumStride to compute a row size.");
+
                 case SourcePixelFormat.Grayscale8: return 1;
                 case SourcePixelFormat.Rgb24:
                 case SourcePixelFormat.Bgr24: return 3;
