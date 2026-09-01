@@ -4,14 +4,8 @@ using Xunit;
 
 namespace Image2ZPL.Tests;
 
-/// <summary>
-/// Tests for MonochromeBitmap.
-/// </summary>
 public class MonochromeBitmapTests
 {
-    /// <summary>
-    /// Verifies that BytesPerRow correctly rounds up to whole bytes.
-    /// </summary>
     [Theory]
     [InlineData(1, 1)]
     [InlineData(8, 1)]
@@ -24,9 +18,6 @@ public class MonochromeBitmapTests
         Assert.Equal(expected, bitmap.BytesPerRow);
     }
 
-    /// <summary>
-    /// Verifies that a new bitmap is initialized as all white (all bits zero).
-    /// </summary>
     [Fact]
     public void NewBitmap_IsAllWhite()
     {
@@ -34,9 +25,6 @@ public class MonochromeBitmapTests
         Assert.All(bitmap.Bits, b => Assert.Equal(0, b));
     }
 
-    /// <summary>
-    /// Verifies that SetBlack sets the most significant bit first.
-    /// </summary>
     [Fact]
     public void SetBlack_SetsTheMostSignificantBitFirst()
     {
@@ -45,9 +33,6 @@ public class MonochromeBitmapTests
         Assert.Equal(0x80, bitmap.Bits[0]);
     }
 
-    /// <summary>
-    /// Verifies that SetBlack is readable by IsBlack.
-    /// </summary>
     [Fact]
     public void SetBlack_IsReadableByIsBlack()
     {
@@ -57,9 +42,6 @@ public class MonochromeBitmapTests
         Assert.False(bitmap.IsBlack(15, 2));
     }
 
-    /// <summary>
-    /// Verifies that Row returns only that row's bytes.
-    /// </summary>
     [Fact]
     public void Row_ReturnsOnlyThatRowsBytes()
     {

@@ -4,9 +4,6 @@ using Xunit;
 
 namespace Image2ZPL.Tests;
 
-/// <summary>
-/// Tests for GraphicFieldEncoder.
-/// </summary>
 public class GraphicFieldEncoderTests
 {
     private static string Encode(MonochromeBitmap bitmap, bool compress, int x = 0, int y = 0)
@@ -16,9 +13,6 @@ public class GraphicFieldEncoderTests
         return writer.ToString();
     }
 
-    /// <summary>
-    /// Verifies that uncompressed output emits the correct header with byte counts and row width.
-    /// </summary>
     [Fact]
     public void Uncompressed_EmitsHeaderWithByteCountsAndRowWidth()
     {
@@ -29,9 +23,6 @@ public class GraphicFieldEncoderTests
         Assert.EndsWith("^FS", zpl);
     }
 
-    /// <summary>
-    /// Verifies that uncompressed output emits two uppercase hex characters per byte.
-    /// </summary>
     [Fact]
     public void Uncompressed_EmitsTwoUppercaseHexCharactersPerByte()
     {
@@ -42,9 +33,6 @@ public class GraphicFieldEncoderTests
         Assert.Equal("^FO0,0^GFA,1,1,1,C0^FS", zpl);
     }
 
-    /// <summary>
-    /// Verifies that uncompressed output emits every row in order.
-    /// </summary>
     [Fact]
     public void Uncompressed_EmitsEveryRowInOrder()
     {
