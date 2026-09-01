@@ -6,9 +6,13 @@
     <PackageId>Image2ZPL.ImageSharp</PackageId>
     <Description>ImageSharp adapter for Image2ZPL. Converts an ImageSharp Image into a ZPL II graphic field. Note that SixLabors.ImageSharp is distributed under the Six Labors Split License, which is not the MIT license that Image2ZPL itself uses.</Description>
     <PackageTags>zpl;zebra;label;printing;imagesharp</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
     <ProjectReference Include="../Image2ZPL/Image2ZPL.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>

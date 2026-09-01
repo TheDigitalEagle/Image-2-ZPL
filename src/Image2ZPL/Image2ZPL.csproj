@@ -4,8 +4,12 @@
     <PackageId>Image2ZPL</PackageId>
     <Description>Converts images into ZPL II graphic fields for Zebra printers, without uploading an image to the printer.</Description>
     <PackageTags>zpl;zebra;label;printing;barcode</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="System.Memory" Version="4.6.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>

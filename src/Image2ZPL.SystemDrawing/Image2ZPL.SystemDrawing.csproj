@@ -4,6 +4,7 @@
     <PackageId>Image2ZPL.SystemDrawing</PackageId>
     <Description>System.Drawing adapter for Image2ZPL, including a compatibility shim for the version 1.x API. Windows only.</Description>
     <PackageTags>zpl;zebra;label;printing;system.drawing</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <!-- Allows the net8.0-windows target to compile on a non-Windows build
          machine. It does not ship as a runtime dependency and does not
          change behavior on Windows; it only unblocks compiling against the
@@ -23,5 +24,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Image2ZPL/Image2ZPL.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>

@@ -6,7 +6,11 @@
     <ToolCommandName>image2zpl</ToolCommandName>
     <PackageId>Image2ZPL.Cli</PackageId>
     <Description>Command line tool that converts an image into a ZPL II graphic field.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
   <ItemGroup>
     <!-- This is an application, not a library, so it must bundle the native assets it needs
          to run once installed as a dotnet tool. SkiaSharp's main package carries Windows and
