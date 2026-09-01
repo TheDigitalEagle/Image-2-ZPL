@@ -38,12 +38,29 @@ CS0104, "ambiguous reference between `System.Convert` and
 version 1.x, which also defined `Image2ZPL.Convert`. It is called out
 here because it is easy to be surprised by on a fresh upgrade.
 
-The fix is to qualify the call, either as `System.Convert.ToBase64String(...)`
-or `Image2ZPL.Convert.BitmapToZPLII(...)`, whichever you use less often. If
-you have moved to the new API, the cleanest option is to drop
-`using Image2ZPL;` in favour of qualifying `Image2ZPL.ZplImageOptions` and
-the `ToZpl` extension method's namespace, which removes the collision
-entirely.
+You can fix a single call site by qualifying it, either as
+`System.Convert.ToBase64String(...)` or `Image2ZPL.Convert.BitmapToZPLII(...)`,
+whichever you use less often. Dropping `using Image2ZPL;` does not work as a
+fix: `ToZpl` is an extension method, and extension methods are only found
+through the `using` for their namespace, so removing it breaks
+`bitmap.ToZpl(...)` outright, not just the ambiguous call.
+
+The fix that scales to a whole file is a using alias directive, which wins
+over a using-namespace directive:
+
+```csharp
+using System;
+using Image2ZPL;
+using Convert = System.Convert;   // resolves the ambiguity
+
+// Convert.ToBase64String(...) now means System.Convert
+// bitmap.ToZpl(...) still works
+// Image2ZPL.Convert.BitmapToZPLII(...) still works when fully qualified
+```
+
+`Convert` alone now always means `System.Convert` in that file, `ToZpl` is
+still found because `using Image2ZPL;` is still in scope, and the old API is
+still reachable through its full name.
 
 ## Output differences
 
