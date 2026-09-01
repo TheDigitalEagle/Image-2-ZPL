@@ -10,10 +10,14 @@ logos, and anything else you want to print alongside your label data.
 
 | Package | Use it when |
 |---|---|
-| `Image2ZPL` | You already have raw pixel data. No dependencies. |
+| `Image2ZPL` | You already have raw pixel data. No third-party dependencies. |
 | `Image2ZPL.SkiaSharp` | You want to load PNG, JPG, or BMP files. Cross-platform, MIT. On Linux, also add `SkiaSharp.NativeAssets.Linux`. |
 | `Image2ZPL.ImageSharp` | You already use ImageSharp. See the licence note below. |
 | `Image2ZPL.SystemDrawing` | You are on Windows and upgrading from version 1.x. |
+
+No third-party dependencies. On `netstandard2.0` it references `System.Memory`,
+Microsoft's MIT licensed `Span<T>` polyfill, which most .NET Framework
+projects already have. On `net8.0` and `net10.0` it has none at all.
 
 ## Quick start
 
