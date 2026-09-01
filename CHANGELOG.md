@@ -33,16 +33,18 @@
 
 - Runs longer than 419 repeats now emit consecutive repeat codes instead
   of throwing an exception.
+- Right-edge clipping in the 1bpp bitmap masking, so images whose width is
+  not a multiple of eight no longer print a black stripe down the right
+  edge. Thanks to @neilwarland (#3). That fix was merged in February 2026
+  but never published, so 2.0.0 is the first release to carry it. The
+  halftoner in 2.0.0 makes this class of bug structurally impossible: it
+  never addresses a pixel at or beyond the image width, so the padding
+  bits in the final byte of each row are never set.
 
 ### Removed
 
 - The `TestZPL` WinForms demo, replaced by the command line tool and the
   test suite.
-
-## 1.0.1
-
-- Fixed right-edge clipping in 1bpp bitmap masking. Thanks to
-  @neilwarland. (#3)
 
 ## 1.0.0
 
