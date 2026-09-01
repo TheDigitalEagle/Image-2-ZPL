@@ -13,6 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/Image2ZPL/Image2ZPL.csproj" />
     <ProjectReference Include="..\..\src\Image2ZPL.SkiaSharp\Image2ZPL.SkiaSharp.csproj" />
+    <ProjectReference Include="..\..\src\Image2ZPL.ImageSharp\Image2ZPL.ImageSharp.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Golden/**" CopyToOutputDirectory="PreserveNewest" />
