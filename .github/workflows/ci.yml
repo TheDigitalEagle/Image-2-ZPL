@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      # The System.Drawing adapter targets net472 and net8.0-windows, so the
+      # full solution only builds on Windows. Linux and macOS build and test
+      # the projects that are cross-platform instead. This is deliberate:
+      # do not collapse this into a single solution-wide dotnet test step,
+      # it fails on Linux and macOS because System.Drawing.Common throws
+      # PlatformNotSupportedException off Windows.
+      - name: Build and test (Windows)
+        if: runner.os == 'Windows'
+        run: dotnet test Image2ZPL.sln --configuration Release
+
+      - name: Build and test (Linux and macOS)
+        if: runner.os != 'Windows'
+        run: |
+          dotnet build src/Image2ZPL/Image2ZPL.csproj --configuration Release
+          dotnet build src/Image2ZPL.SkiaSharp/Image2ZPL.SkiaSharp.csproj --configuration Release
+          dotnet build src/Image2ZPL.ImageSharp/Image2ZPL.ImageSharp.csproj --configuration Release
+          dotnet build src/Image2ZPL.Cli/Image2ZPL.Cli.csproj --configuration Release
+          dotnet test tests/Image2ZPL.Tests/Image2ZPL.Tests.csproj --configuration Release
