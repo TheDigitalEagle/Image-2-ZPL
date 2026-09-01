@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0;net10.0</TargetFrameworks>
+    <PackageId>Image2ZPL.SkiaSharp</PackageId>
+    <Description>SkiaSharp adapter for Image2ZPL. Converts an SKBitmap into a ZPL II graphic field.</Description>
+    <PackageTags>zpl;zebra;label;printing;skiasharp</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="3.116.1" />
+    <ProjectReference Include="../Image2ZPL/Image2ZPL.csproj" />
+  </ItemGroup>
+</Project>
