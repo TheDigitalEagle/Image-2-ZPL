@@ -59,6 +59,11 @@ namespace Image2ZPL.Internal
             new[] { 1, 1, 1 },
         };
 
+        // Weights deliberately sum to 6 against a divisor of 8: two eighths
+        // of the error are discarded by design, which is what gives Atkinson
+        // its cleaner whites and higher contrast compared to Floyd-Steinberg.
+        // Do not "fix" this to sum to 8, that would just be Floyd-Steinberg
+        // with different offsets.
         private static readonly int[][] AtkinsonKernel =
         {
             new[] { 1, 0, 1 },
@@ -107,6 +112,11 @@ namespace Image2ZPL.Internal
                     {
                         int nx = x + kernel[k][0];
                         int ny = y + kernel[k][1];
+
+                        // No ny < 0 check: both kernels above only diffuse
+                        // downward or across the current row (dy is always
+                        // 0 or positive). A future kernel with a negative dy
+                        // must add that check here.
                         if (nx < 0 || nx >= width || ny >= height)
                         {
                             continue;
@@ -126,8 +136,9 @@ namespace Image2ZPL.Internal
             {
                 for (int x = 0; x < width; x++)
                 {
-                    // Spread the decision point around the threshold by up to
-                    // plus or minus 60 levels, ordered by the Bayer matrix.
+                    // Spread the decision point around the threshold, ordered
+                    // by the Bayer matrix. Bayer4x4 ranges 0 to 15, so bias
+                    // ranges from -64 (0 - 8, times 8) to +56 (15 - 8, times 8).
                     int bias = (Bayer4x4[((y & 3) * 4) + (x & 3)] - 8) * 8;
                     int value = gray[(y * width) + x] + bias;
                     if (IsDot(value < threshold, invert))

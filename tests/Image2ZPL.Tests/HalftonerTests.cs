@@ -80,6 +80,19 @@ public class HalftonerTests
         return count;
     }
 
+    private static string[] Render(MonochromeBitmap bitmap)
+    {
+        var rows = new string[bitmap.Height];
+        for (int y = 0; y < bitmap.Height; y++)
+        {
+            var row = new char[bitmap.Width];
+            for (int x = 0; x < bitmap.Width; x++)
+                row[x] = bitmap.IsBlack(x, y) ? '#' : '.';
+            rows[y] = new string(row);
+        }
+        return rows;
+    }
+
     [Theory]
     [InlineData(DitherMode.FloydSteinberg)]
     [InlineData(DitherMode.Atkinson)]
@@ -120,6 +133,64 @@ public class HalftonerTests
         for (int y = 0; y < 4; y++)
             for (int x = 0; x < 4; x++)
                 Assert.Equal(bitmap.IsBlack(x, y), bitmap.IsBlack(x + 4, y + 4));
+    }
+
+    [Fact]
+    public void Ordered4x4_OnFlatMidGrayIsExactlyHalfBlack()
+    {
+        // bias = (Bayer - 8) * 8, so at gray 128 against threshold 128 the
+        // decision reduces to Bayer < 8: 8 of every 16 cells, 64 tiles, 512 dots.
+        var bitmap = Halftoner.Apply(Uniform(32, 32, 128), 32, 32, DitherMode.Ordered4x4, 128, invert: false);
+        Assert.Equal(512, CountBlack(bitmap));
+    }
+
+    [Fact]
+    public void FloydSteinberg_OnFlatMidGrayMatchesGoldenPattern()
+    {
+        // Golden regression test pinning the exact Floyd-Steinberg kernel
+        // output on a 4x4 flat 50% gray field. This value was measured, not
+        // hand derived: it was captured from a run of the implementation and
+        // then hand checked for plausibility (error propagates rightward and
+        // downward, coverage is close to half, no all black or all white
+        // rows). Changing this expected pattern requires deliberately
+        // re-deriving the kernel, not adjusting the assertion to match
+        // whatever the code currently produces.
+        var bitmap = Halftoner.Apply(Uniform(4, 4, 128), 4, 4, DitherMode.FloydSteinberg, 128, invert: false);
+        string[] expected =
+        {
+            ".#.#",
+            "#.#.",
+            ".#.#",
+            "#.#.",
+        };
+        Assert.Equal(expected, Render(bitmap));
+    }
+
+    [Fact]
+    public void FloydSteinbergAndAtkinson_MeasuredGoldenBlackCountsOnFlatMidGray()
+    {
+        // Measured regression goldens on a 32x32 flat 50% gray field, unlike
+        // the derived Ordered4x4 count above: these two numbers were
+        // captured from a run of the implementation, not computed by hand
+        // from the kernel weights. Both kernels happen to land on exactly
+        // half black by symmetry of a flat 50% input against a threshold of
+        // 128, so the counts alone do not distinguish the two kernels from
+        // each other; see FloydSteinbergAndAtkinsonProduceDifferentResults
+        // below for that.
+        var gray = Uniform(32, 32, 128);
+        var floyd = Halftoner.Apply(gray, 32, 32, DitherMode.FloydSteinberg, 128, invert: false);
+        var atkinson = Halftoner.Apply(gray, 32, 32, DitherMode.Atkinson, 128, invert: false);
+        Assert.Equal(512, CountBlack(floyd));
+        Assert.Equal(512, CountBlack(atkinson));
+    }
+
+    [Fact]
+    public void FloydSteinbergAndAtkinsonProduceDifferentResults()
+    {
+        var gray = Uniform(32, 32, 128);
+        var floyd = Halftoner.Apply(gray, 32, 32, DitherMode.FloydSteinberg, 128, invert: false);
+        var atkinson = Halftoner.Apply(gray, 32, 32, DitherMode.Atkinson, 128, invert: false);
+        Assert.NotEqual(floyd.Bits, atkinson.Bits);
     }
 
     [Fact]
