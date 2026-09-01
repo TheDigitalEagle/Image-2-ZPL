@@ -18,29 +18,32 @@ namespace Image2ZPL
                 throw new ArgumentNullException(nameof(bitmap));
             }
 
-            // Normalise to a known layout, because callers may hand us any
-            // colour type Skia supports.
-            using (SKBitmap source = EnsureBgra8888(bitmap))
+            // The already-Bgra8888 case is the common one (it is what
+            // SKBitmap.Decode produces on most platforms), and the core
+            // takes a ReadOnlySpan<byte> specifically so this path needs no
+            // copy at all: read the caller's pixels directly and leave the
+            // bitmap alone. Copying here, only so a using block would have
+            // something safe to dispose, cost a full native copy plus a
+            // second managed copy through .Bytes on every call.
+            if (bitmap.ColorType == SKColorType.Bgra8888)
             {
                 return ZplImageConverter.ToZpl(
-                    source.Bytes, source.Width, source.Height, source.RowBytes,
+                    bitmap.GetPixelSpan(), bitmap.Width, bitmap.Height,
+                    bitmap.RowBytes, SourcePixelFormat.Bgra32, options);
+            }
+
+            // Any other colour type still needs converting to a known
+            // layout, which does require an owned, disposable bitmap.
+            using (SKBitmap converted = ConvertToBgra8888(bitmap))
+            {
+                return ZplImageConverter.ToZpl(
+                    converted.Bytes, converted.Width, converted.Height, converted.RowBytes,
                     SourcePixelFormat.Bgra32, options);
             }
         }
 
-        private static SKBitmap EnsureBgra8888(SKBitmap bitmap)
+        private static SKBitmap ConvertToBgra8888(SKBitmap bitmap)
         {
-            if (bitmap.ColorType == SKColorType.Bgra8888)
-            {
-                // Copy so the caller's bitmap is never disposed by us.
-                SKBitmap? copy = bitmap.Copy();
-                if (copy == null)
-                {
-                    throw new NotSupportedException("Could not copy the source SKBitmap.");
-                }
-                return copy;
-            }
-
             var converted = new SKBitmap(new SKImageInfo(bitmap.Width, bitmap.Height, SKColorType.Bgra8888, SKAlphaType.Unpremul));
             if (!bitmap.CopyTo(converted, SKColorType.Bgra8888))
             {
