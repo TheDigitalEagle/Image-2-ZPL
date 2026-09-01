@@ -53,4 +53,108 @@ public class GraphicFieldEncoderTests
         var zpl = Encode(bitmap, compress: false);
         Assert.Equal("^FO0,0^GFA,2,2,1,0080^FS", zpl);
     }
+
+    /// <summary>
+    /// Returns just the data portion. The header holds five commas before
+    /// the data begins: ^FO{x},{y}^GFA,{byteCount},{fieldCount},{bytesPerRow},
+    /// </summary>
+    private static string DataOf(string zpl)
+    {
+        int start = 0;
+        for (int i = 0; i < 5; i++)
+        {
+            start = zpl.IndexOf(',', start) + 1;
+        }
+        return zpl.Substring(start, zpl.Length - start - "^FS".Length);
+    }
+
+    /// <summary>
+    /// Verifies that an all-white row compresses to a single comma fill code.
+    /// </summary>
+    [Fact]
+    public void Compressed_AllWhiteRowBecomesComma()
+    {
+        var bitmap = new MonochromeBitmap(16, 1);
+        Assert.Equal(",", DataOf(Encode(bitmap, compress: true)));
+    }
+
+    /// <summary>
+    /// Verifies that an all-black row compresses to a single bang fill code.
+    /// </summary>
+    [Fact]
+    public void Compressed_AllBlackRowBecomesBang()
+    {
+        var bitmap = new MonochromeBitmap(16, 1);
+        for (int x = 0; x < 16; x++) bitmap.SetBlack(x, 0);
+        Assert.Equal("!", DataOf(Encode(bitmap, compress: true)));
+    }
+
+    /// <summary>
+    /// Verifies that a row identical to the previous row compresses to a colon.
+    /// </summary>
+    [Fact]
+    public void Compressed_RepeatedRowBecomesColon()
+    {
+        var bitmap = new MonochromeBitmap(16, 2);
+        bitmap.SetBlack(0, 0);
+        bitmap.SetBlack(0, 1);
+        Assert.Equal("8,:", DataOf(Encode(bitmap, compress: true)));
+    }
+
+    /// <summary>
+    /// Verifies that run counts map to the ZPL repeat code table, including
+    /// the boundary between single low codes, single high codes, and the
+    /// combined high-plus-low codes.
+    /// </summary>
+    [Theory]
+    [InlineData(1, "G")]
+    [InlineData(19, "Y")]
+    [InlineData(20, "g")]
+    [InlineData(400, "z")]
+    [InlineData(419, "zY")]
+    [InlineData(21, "gG")]
+    public void RunLengthCode_MatchesZplTable(int count, string expected)
+    {
+        Assert.Equal(expected, GraphicFieldEncoder.RunLengthCode(count));
+    }
+
+    /// <summary>
+    /// Verifies that a run longer than 419 (the longest single repeat code)
+    /// emits consecutive repeat codes instead of throwing.
+    /// </summary>
+    [Fact]
+    public void Compressed_RunLongerThan419EmitsConsecutiveCodes()
+    {
+        // 240 bytes of 0xFF is 480 nibbles of F, which exceeds one count code.
+        // A fully black row collapses to "!", so make the last byte differ.
+        var bitmap = new MonochromeBitmap(240 * 8, 1);
+        for (int x = 0; x < (240 * 8) - 4; x++) bitmap.SetBlack(x, 0);
+        var data = DataOf(Encode(bitmap, compress: true));
+        Assert.Contains("zY", data);
+        Assert.DoesNotContain("^", data);
+    }
+
+    /// <summary>
+    /// Verifies that a run of zeros reaching the end of the row collapses to
+    /// a trailing comma fill code rather than a spelled-out run.
+    /// </summary>
+    [Fact]
+    public void Compressed_TrailingWhiteBecomesComma()
+    {
+        var bitmap = new MonochromeBitmap(32, 1);
+        bitmap.SetBlack(0, 0);
+        Assert.Equal("8,", DataOf(Encode(bitmap, compress: true)));
+    }
+
+    /// <summary>
+    /// Verifies that a run of ones reaching the end of the row collapses to
+    /// a trailing bang fill code rather than a spelled-out run.
+    /// </summary>
+    [Fact]
+    public void Compressed_TrailingBlackBecomesBang()
+    {
+        var bitmap = new MonochromeBitmap(32, 1);
+        for (int x = 4; x < 32; x++) bitmap.SetBlack(x, 0);
+        Assert.Equal("0!", DataOf(Encode(bitmap, compress: true)));
+    }
 }
