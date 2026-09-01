@@ -1,3 +1,4 @@
+using System;
 using Image2ZPL;
 using Image2ZPL.Internal;
 using Xunit;
@@ -54,10 +55,11 @@ public class HalftonerTests
         Assert.Equal(expectedLastByte, bitmap.Bits[bitmap.BytesPerRow - 1]);
     }
 
-    // Task 8 adds an InlineData row per dithering mode. Only Threshold
-    // exists at this point, so only Threshold is listed here.
     [Theory]
     [InlineData(DitherMode.Threshold)]
+    [InlineData(DitherMode.FloydSteinberg)]
+    [InlineData(DitherMode.Atkinson)]
+    [InlineData(DitherMode.Ordered4x4)]
     public void EveryMode_LeavesPaddingBitsZero(DitherMode mode)
     {
         const int width = 13;
@@ -67,5 +69,63 @@ public class HalftonerTests
             byte last = bitmap.Bits[(y * bitmap.BytesPerRow) + bitmap.BytesPerRow - 1];
             Assert.Equal(0, last & 0x07); // 13 px leaves 3 unused bits
         }
+    }
+
+    private static int CountBlack(MonochromeBitmap bitmap)
+    {
+        int count = 0;
+        for (int y = 0; y < bitmap.Height; y++)
+            for (int x = 0; x < bitmap.Width; x++)
+                if (bitmap.IsBlack(x, y)) count++;
+        return count;
+    }
+
+    [Theory]
+    [InlineData(DitherMode.FloydSteinberg)]
+    [InlineData(DitherMode.Atkinson)]
+    [InlineData(DitherMode.Ordered4x4)]
+    public void Dithering_TurnsFlatMidGrayIntoAMixOfDots(DitherMode mode)
+    {
+        // Plain thresholding makes flat 50% gray entirely black or entirely
+        // white. Dithering must produce both, which is the whole point.
+        var bitmap = Halftoner.Apply(Uniform(32, 32, 128), 32, 32, mode, 128, invert: false);
+        int black = CountBlack(bitmap);
+        Assert.InRange(black, 1, (32 * 32) - 1);
+    }
+
+    [Theory]
+    [InlineData(DitherMode.FloydSteinberg)]
+    [InlineData(DitherMode.Atkinson)]
+    [InlineData(DitherMode.Ordered4x4)]
+    public void Dithering_KeepsSolidBlackSolid(DitherMode mode)
+    {
+        var bitmap = Halftoner.Apply(Uniform(16, 16, 0), 16, 16, mode, 128, invert: false);
+        Assert.Equal(16 * 16, CountBlack(bitmap));
+    }
+
+    [Theory]
+    [InlineData(DitherMode.FloydSteinberg)]
+    [InlineData(DitherMode.Atkinson)]
+    [InlineData(DitherMode.Ordered4x4)]
+    public void Dithering_KeepsSolidWhiteSolid(DitherMode mode)
+    {
+        var bitmap = Halftoner.Apply(Uniform(16, 16, 255), 16, 16, mode, 128, invert: false);
+        Assert.Equal(0, CountBlack(bitmap));
+    }
+
+    [Fact]
+    public void Ordered4x4_RepeatsEveryFourPixels()
+    {
+        var bitmap = Halftoner.Apply(Uniform(8, 8, 128), 8, 8, DitherMode.Ordered4x4, 128, invert: false);
+        for (int y = 0; y < 4; y++)
+            for (int x = 0; x < 4; x++)
+                Assert.Equal(bitmap.IsBlack(x, y), bitmap.IsBlack(x + 4, y + 4));
+    }
+
+    [Fact]
+    public void Apply_RejectsUnknownDitherMode()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => Halftoner.Apply(Uniform(4, 4, 128), 4, 4, (DitherMode)99, 128, invert: false));
     }
 }
