@@ -36,6 +36,7 @@ error. This is a SkiaSharp packaging detail, not something Image2ZPL can
 bundle for you.
 
 ```csharp
+using System;
 using Image2ZPL;
 using SkiaSharp;
 
@@ -117,7 +118,7 @@ is the low-level path the adapters themselves are built on. See
 
 ## Testing without a printer
 
-Paste the output into http://labelary.com/viewer.html.
+Paste the output into https://labelary.com/viewer.html.
 
 ## Output format
 

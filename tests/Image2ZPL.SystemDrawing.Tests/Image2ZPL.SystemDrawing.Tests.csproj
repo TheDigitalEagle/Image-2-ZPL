@@ -1,6 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <!-- net472 is included so this Windows-only adapter's net472 target
+         actually gets tested somewhere in CI, and not just compiled: it is
+         the framework most of the project's existing forks are on. -->
+    <TargetFrameworks>net472;net8.0-windows</TargetFrameworks>
     <IsPackable>false</IsPackable>
     <!-- Allows this test project to compile on a non-Windows build machine.
          It does not ship as a runtime dependency and does not change
@@ -14,6 +17,16 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Reference Include="System.Drawing" />
+    <!-- Provides the net472 reference assemblies so this target framework can
+         compile on a non-Windows build machine, which has no .NET Framework
+         installed. It is a build-time only, PrivateAssets="all" package and
+         does not ship as a runtime dependency. Image2ZPL.SystemDrawing.csproj
+         carries the same package for itself with PrivateAssets="all", which
+         does not flow transitively, so this project needs its own copy. -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/Image2ZPL.SystemDrawing/Image2ZPL.SystemDrawing.csproj" />
