@@ -33,7 +33,12 @@ namespace Image2ZPL
             if (bitmap.ColorType == SKColorType.Bgra8888)
             {
                 // Copy so the caller's bitmap is never disposed by us.
-                return bitmap.Copy();
+                SKBitmap? copy = bitmap.Copy();
+                if (copy == null)
+                {
+                    throw new NotSupportedException("Could not copy the source SKBitmap.");
+                }
+                return copy;
             }
 
             var converted = new SKBitmap(new SKImageInfo(bitmap.Width, bitmap.Height, SKColorType.Bgra8888, SKAlphaType.Unpremul));
