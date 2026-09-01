@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using Image2ZPL;
 using SkiaSharp;
@@ -19,7 +20,10 @@ Options:
       --invert           Swap black and white.
       --no-compress      Emit plain ASCII hex with no run-length codes.
       --wrap             Wrap the field in ^XA and ^XZ so it is a whole label.
-  -h, --help             Show this help.";
+  -h, --help             Show this help.
+
+A file name that begins with a dash must be written with a ./ prefix, for example ./-logo.png,
+so it is not mistaken for an option.";
 
     private static int Main(string[] args)
     {
@@ -56,19 +60,28 @@ Options:
                     output = NextValue(args, ref i);
                     break;
                 case "-x":
-                    options.X = int.Parse(NextValue(args, ref i));
+                {
+                    string option = args[i];
+                    options.X = ParseInt(option, NextValue(args, ref i));
                     break;
+                }
                 case "-y":
-                    options.Y = int.Parse(NextValue(args, ref i));
+                {
+                    string option = args[i];
+                    options.Y = ParseInt(option, NextValue(args, ref i));
                     break;
+                }
                 case "-d":
                 case "--dither":
                     options.Dither = ParseDither(NextValue(args, ref i));
                     break;
                 case "-t":
                 case "--threshold":
-                    options.Threshold = byte.Parse(NextValue(args, ref i));
+                {
+                    string option = args[i];
+                    options.Threshold = ParseByte(option, NextValue(args, ref i));
                     break;
+                }
                 case "--invert":
                     options.Invert = true;
                     break;
@@ -129,7 +142,39 @@ Options:
         {
             throw new ArgumentException($"Option '{args[i]}' needs a value.");
         }
-        return args[++i];
+
+        string value = args[i + 1];
+
+        // A leading dash followed by a non-digit is almost certainly the next
+        // option rather than a value, so reject it instead of silently
+        // consuming it. A negative number is still a legitimate value.
+        if (value.Length > 1 && value[0] == '-' && !char.IsDigit(value[1]))
+        {
+            throw new ArgumentException(
+                $"Option '{args[i]}' needs a value, but was followed by '{value}'. " +
+                "If that is really a file name, write it as ./" + value);
+        }
+
+        i++;
+        return value;
+    }
+
+    private static int ParseInt(string option, string value)
+    {
+        if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int result))
+        {
+            throw new ArgumentException($"Option '{option}' needs a whole number, but got '{value}'.");
+        }
+        return result;
+    }
+
+    private static byte ParseByte(string option, string value)
+    {
+        if (!byte.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out byte result))
+        {
+            throw new ArgumentException($"Option '{option}' needs a number from 0 to 255, but got '{value}'.");
+        }
+        return result;
     }
 
     private static DitherMode ParseDither(string value)
