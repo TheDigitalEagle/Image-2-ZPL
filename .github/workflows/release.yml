@@ -18,6 +18,16 @@ jobs:
 
       - run: dotnet test Image2ZPL.sln --configuration Release
 
+      - name: Verify the tag matches the project version
+        shell: bash
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          project_version="$(dotnet msbuild src/Image2ZPL/Image2ZPL.csproj -getProperty:Version)"
+          if [ "$tag_version" != "$project_version" ]; then
+            echo "Tag ${GITHUB_REF_NAME} (version $tag_version) does not match the project Version $project_version in Directory.Build.props." >&2
+            exit 1
+          fi
+
       - run: dotnet pack Image2ZPL.sln --configuration Release --output artifacts
 
       - name: Push to NuGet
