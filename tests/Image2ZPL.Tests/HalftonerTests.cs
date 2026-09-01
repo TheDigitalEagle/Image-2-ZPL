@@ -193,6 +193,87 @@ public class HalftonerTests
         Assert.NotEqual(floyd.Bits, atkinson.Bits);
     }
 
+    private static byte[] HorizontalGradient(int width, int height)
+    {
+        var gray = new byte[width * height];
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                gray[(y * width) + x] = (byte)((x * 255) / (width - 1));
+            }
+        }
+        return gray;
+    }
+
+    // The flat mid-gray goldens above are not, on their own, strong enough:
+    // a wrong kernel (for example a transposed pair of weights) can still
+    // land on the correct side of the threshold for every pixel, because a
+    // flat 128 field against threshold 128 puts every pixel on the decision
+    // boundary before any error is injected, so the first decision (and
+    // everything downstream of it in a symmetric field) is kernel
+    // independent. A left to right gradient with no pixel sitting exactly
+    // on the threshold makes the black to white crossover band sensitive to
+    // each weight's specific magnitude and offset, so a transposed or
+    // mis-assigned weight moves or reshapes the band and the golden fails.
+    // This was confirmed empirically: a deliberately transposed
+    // Floyd-Steinberg kernel (weights 5,3,7,1 instead of 7,3,5,1) fails
+    // FloydSteinberg_OnGradientMatchesGoldenPattern below, while leaving the
+    // flat 4x4 checkerboard golden above unchanged.
+
+    [Fact]
+    public void FloydSteinberg_OnGradientMatchesGoldenPattern()
+    {
+        // Golden regression test pinning the exact Floyd-Steinberg kernel
+        // output on a 16 wide, 4 row left to right gradient with no pixel on
+        // the threshold. Measured, not hand derived: captured from a run of
+        // the implementation, then hand checked for plausibility (left side
+        // predominantly black, right side predominantly white, a mixed
+        // crossover band in between, no all black or all white row).
+        // Changing this expected pattern requires deliberately re-deriving
+        // the kernel, not adjusting the assertion to match whatever the code
+        // currently produces.
+        var bitmap = Halftoner.Apply(HorizontalGradient(16, 4), 16, 4, DitherMode.FloydSteinberg, 128, invert: false);
+        string[] expected =
+        {
+            "######.#.#......",
+            "####.##.#..#....",
+            "#####.#.#.#.....",
+            "###.##.#....#...",
+        };
+        Assert.Equal(expected, Render(bitmap));
+    }
+
+    [Fact]
+    public void Atkinson_OnGradientMatchesGoldenPattern()
+    {
+        // Golden regression test pinning the exact Atkinson kernel output on
+        // the same gradient as the Floyd-Steinberg golden above. Measured,
+        // not hand derived, hand checked the same way for plausibility.
+        // Atkinson's (2, 0) offset and its 6/8 (not 8/8) error retention
+        // give it a visibly different crossover position and texture than
+        // Floyd-Steinberg on the same input, which is confirmed by the
+        // AtkinsonGradientDiffersFromFloydSteinbergGradient test below.
+        var bitmap = Halftoner.Apply(HorizontalGradient(16, 4), 16, 4, DitherMode.Atkinson, 128, invert: false);
+        string[] expected =
+        {
+            "#######..#......",
+            "#####.##........",
+            "#####..##.#.....",
+            "#######...#.....",
+        };
+        Assert.Equal(expected, Render(bitmap));
+    }
+
+    [Fact]
+    public void AtkinsonGradientDiffersFromFloydSteinbergGradient()
+    {
+        var gray = HorizontalGradient(16, 4);
+        var floyd = Halftoner.Apply(gray, 16, 4, DitherMode.FloydSteinberg, 128, invert: false);
+        var atkinson = Halftoner.Apply(gray, 16, 4, DitherMode.Atkinson, 128, invert: false);
+        Assert.NotEqual(floyd.Bits, atkinson.Bits);
+    }
+
     [Fact]
     public void Apply_RejectsUnknownDitherMode()
     {
