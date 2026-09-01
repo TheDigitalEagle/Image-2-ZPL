@@ -68,9 +68,6 @@ public class GraphicFieldEncoderTests
         return zpl.Substring(start, zpl.Length - start - "^FS".Length);
     }
 
-    /// <summary>
-    /// Verifies that an all-white row compresses to a single comma fill code.
-    /// </summary>
     [Fact]
     public void Compressed_AllWhiteRowBecomesComma()
     {
@@ -78,9 +75,6 @@ public class GraphicFieldEncoderTests
         Assert.Equal(",", DataOf(Encode(bitmap, compress: true)));
     }
 
-    /// <summary>
-    /// Verifies that an all-black row compresses to a single bang fill code.
-    /// </summary>
     [Fact]
     public void Compressed_AllBlackRowBecomesBang()
     {
@@ -89,9 +83,6 @@ public class GraphicFieldEncoderTests
         Assert.Equal("!", DataOf(Encode(bitmap, compress: true)));
     }
 
-    /// <summary>
-    /// Verifies that a row identical to the previous row compresses to a colon.
-    /// </summary>
     [Fact]
     public void Compressed_RepeatedRowBecomesColon()
     {
@@ -101,11 +92,6 @@ public class GraphicFieldEncoderTests
         Assert.Equal("8,:", DataOf(Encode(bitmap, compress: true)));
     }
 
-    /// <summary>
-    /// Verifies that run counts map to the ZPL repeat code table, including
-    /// the boundary between single low codes, single high codes, and the
-    /// combined high-plus-low codes.
-    /// </summary>
     [Theory]
     [InlineData(1, "G")]
     [InlineData(19, "Y")]
@@ -118,10 +104,6 @@ public class GraphicFieldEncoderTests
         Assert.Equal(expected, GraphicFieldEncoder.RunLengthCode(count));
     }
 
-    /// <summary>
-    /// Verifies that a run longer than 419 (the longest single repeat code)
-    /// emits consecutive repeat codes instead of throwing.
-    /// </summary>
     [Fact]
     public void Compressed_RunLongerThan419EmitsConsecutiveCodes()
     {
@@ -134,10 +116,6 @@ public class GraphicFieldEncoderTests
         Assert.DoesNotContain("^", data);
     }
 
-    /// <summary>
-    /// Verifies that a run of zeros reaching the end of the row collapses to
-    /// a trailing comma fill code rather than a spelled-out run.
-    /// </summary>
     [Fact]
     public void Compressed_TrailingWhiteBecomesComma()
     {
@@ -146,10 +124,6 @@ public class GraphicFieldEncoderTests
         Assert.Equal("8,", DataOf(Encode(bitmap, compress: true)));
     }
 
-    /// <summary>
-    /// Verifies that a run of ones reaching the end of the row collapses to
-    /// a trailing bang fill code rather than a spelled-out run.
-    /// </summary>
     [Fact]
     public void Compressed_TrailingBlackBecomesBang()
     {
