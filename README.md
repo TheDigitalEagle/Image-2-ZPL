@@ -91,6 +91,30 @@ Use `Threshold` for line art, logos, and text. Use `FloydSteinberg` for
 photographs. Version 1.x had no equivalent setting, because it let GDI+
 decide.
 
+## Using the core directly
+
+Most callers want an adapter, which decodes a file and hands the pixels to
+the core for you. If you already have raw pixel data, for example from your
+own decoder or a hardware capture, the `Image2ZPL` package converts it
+directly with no adapter and no third-party dependency:
+
+```csharp
+using System;
+using Image2ZPL;
+
+// A 2x2 grayscale image: top-left and bottom-right pixels black, the rest
+// white. One byte per pixel, 0 is black and 255 is white.
+byte[] pixels = { 0, 255, 255, 0 };
+string zpl = ZplImageConverter.ToZpl(pixels, width: 2, height: 2, stride: 2, SourcePixelFormat.Grayscale8);
+
+Console.WriteLine("^XA" + zpl + "^XZ");
+```
+
+`stride` is the number of bytes per row, including any padding; for a tightly
+packed buffer it equals `width` times the bytes per pixel of `format`. This
+is the low-level path the adapters themselves are built on. See
+[Options](#options) below for `ZplImageOptions`.
+
 ## Testing without a printer
 
 Paste the output into http://labelary.com/viewer.html.
