@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <!-- Allows this test project to compile on a non-Windows build machine.
+         It does not ship as a runtime dependency and does not change
+         behavior on Windows; it only unblocks compiling against the
+         Windows-only reference assemblies from Linux and macOS. This
+         project still only runs on Windows, since System.Drawing.Common
+         throws PlatformNotSupportedException elsewhere. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Image2ZPL.SystemDrawing/Image2ZPL.SystemDrawing.csproj" />
+  </ItemGroup>
+</Project>
