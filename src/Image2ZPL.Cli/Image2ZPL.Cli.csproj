@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>image2zpl</ToolCommandName>
+    <PackageId>Image2ZPL.Cli</PackageId>
+    <Description>Command line tool that converts an image into a ZPL II graphic field.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- This is an application, not a library, so it must bundle the native assets it needs
+         to run once installed as a dotnet tool. SkiaSharp's main package carries Windows and
+         macOS natives but ships Linux support as this separate package. The SkiaSharp adapter
+         library deliberately omits this reference and leaves the choice of native assets to
+         its consumers; the CLI has no consumers to defer to, so it must choose for itself.
+         Harmless on platforms that do not need it. -->
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.116.1" />
+    <ProjectReference Include="../Image2ZPL.SkiaSharp/Image2ZPL.SkiaSharp.csproj" />
+  </ItemGroup>
+</Project>
