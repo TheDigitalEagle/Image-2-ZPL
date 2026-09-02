@@ -1,0 +1,38 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Version>2.0.0</Version>
+    <Authors>Chad Kullhem</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/TheDigitalEagle/Image-2-ZPL</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/TheDigitalEagle/Image-2-ZPL</RepositoryUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+  <!-- Only shipped packages need XML docs. Enabling this everywhere would make
+       a missing doc comment (CS1591) a build error in the test projects too,
+       because TreatWarningsAsErrors is on.
+       This is conditioned on MSBuildProjectName (a reserved property, always
+       available), not IsPackable. IsPackable is set inside each project's own
+       body, and Directory.Build.props is imported before that body, so a
+       condition on IsPackable here would always see an empty string and
+       never engage. A later Directory.Build.targets is not a fix either:
+       the SDK derives DocumentationFile from GenerateDocumentationFile in
+       Microsoft.NET.Sdk.BeforeCommon.targets, which is imported before
+       Microsoft.Common.targets pulls in Directory.Build.targets, so setting
+       GenerateDocumentationFile there is also too late to affect
+       DocumentationFile or CS1591. Directory.Build.props, using a property
+       that does not depend on the project body, is the only place that is
+       both early enough and correct. -->
+  <PropertyGroup Condition="!$(MSBuildProjectName.EndsWith('.Tests'))">
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup Condition="!$(MSBuildProjectName.EndsWith('.Tests'))">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+</Project>

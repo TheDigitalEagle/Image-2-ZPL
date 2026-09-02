@@ -1,0 +1,34 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    # Windows so that the System.Drawing adapter's net472 target can build.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - run: dotnet test Image2ZPL.sln --configuration Release
+
+      - name: Verify the tag matches the project version
+        shell: bash
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          project_version="$(dotnet msbuild src/Image2ZPL/Image2ZPL.csproj -getProperty:Version)"
+          if [ "$tag_version" != "$project_version" ]; then
+            echo "Tag ${GITHUB_REF_NAME} (version $tag_version) does not match the project Version $project_version in Directory.Build.props." >&2
+            exit 1
+          fi
+
+      - run: dotnet pack Image2ZPL.sln --configuration Release --output artifacts
+
+      - name: Push to NuGet
+        run: dotnet nuget push "artifacts/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

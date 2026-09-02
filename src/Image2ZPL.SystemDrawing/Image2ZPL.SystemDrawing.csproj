@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net472;net8.0-windows</TargetFrameworks>
+    <PackageId>Image2ZPL.SystemDrawing</PackageId>
+    <Description>System.Drawing adapter for Image2ZPL, including a compatibility shim for the version 1.x API. Windows only.</Description>
+    <PackageTags>zpl;zebra;label;printing;system.drawing</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- Allows the net8.0-windows target to compile on a non-Windows build
+         machine. It does not ship as a runtime dependency and does not
+         change behavior on Windows; it only unblocks compiling against the
+         Windows-only reference assemblies from Linux and macOS. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
+    <PackageReference Include="System.Drawing.Common" Version="8.0.10" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Reference Include="System.Drawing" />
+    <!-- Provides the net472 reference assemblies so this target framework can
+         compile on a non-Windows build machine, which has no .NET Framework
+         installed. It is a build-time only, PrivateAssets="all" package and
+         does not ship as a runtime dependency. -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Image2ZPL/Image2ZPL.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

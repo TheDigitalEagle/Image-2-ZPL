@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- net472 is included so this Windows-only adapter's net472 target
+         actually gets tested somewhere in CI, and not just compiled: it is
+         the framework most of the project's existing forks are on. -->
+    <TargetFrameworks>net472;net8.0-windows</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+    <!-- Allows this test project to compile on a non-Windows build machine.
+         It does not ship as a runtime dependency and does not change
+         behavior on Windows; it only unblocks compiling against the
+         Windows-only reference assemblies from Linux and macOS. This
+         project still only runs on Windows, since System.Drawing.Common
+         throws PlatformNotSupportedException elsewhere. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net472'">
+    <!-- The core library's netstandard2.0 asset (consumed here because
+         there is no net472-specific build of Image2ZPL) references
+         System.Memory 4.6.0. On .NET Framework the runtime does not unify
+         assembly versions the way .NET Core does, so without a binding
+         redirect the process throws FileLoadException for System.Memory
+         the first time this adapter runs. This test project is a library,
+         so it needs GenerateBindingRedirectsOutputType as well as
+         AutoGenerateBindingRedirects to actually emit the .dll.config file
+         that carries the redirect; an executable would not need the
+         former. See MIGRATION.md for what a consuming application needs. -->
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <!-- Pin System.Memory explicitly. The test SDK resolves an older version
+         than the core library's netstandard2.0 asset asks for, and on .NET
+         Framework that mismatch surfaces as a runtime FileLoadException rather
+         than a build error. Naming the version here puts the conflict inside
+         this project's own reference graph, which is the only place
+         AutoGenerateBindingRedirects can see it and emit a redirect for it. -->
+    <PackageReference Include="System.Memory" Version="4.6.0" />
+    <Reference Include="System.Drawing" />
+    <!-- Provides the net472 reference assemblies so this target framework can
+         compile on a non-Windows build machine, which has no .NET Framework
+         installed. It is a build-time only, PrivateAssets="all" package and
+         does not ship as a runtime dependency. Image2ZPL.SystemDrawing.csproj
+         carries the same package for itself with PrivateAssets="all", which
+         does not flow transitively, so this project needs its own copy. -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Image2ZPL.SystemDrawing/Image2ZPL.SystemDrawing.csproj" />
+  </ItemGroup>
+</Project>
