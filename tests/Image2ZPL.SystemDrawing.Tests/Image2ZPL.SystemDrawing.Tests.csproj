@@ -13,6 +13,20 @@
          throws PlatformNotSupportedException elsewhere. -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net472'">
+    <!-- The core library's netstandard2.0 asset (consumed here because
+         there is no net472-specific build of Image2ZPL) references
+         System.Memory 4.6.0. On .NET Framework the runtime does not unify
+         assembly versions the way .NET Core does, so without a binding
+         redirect the process throws FileLoadException for System.Memory
+         the first time this adapter runs. This test project is a library,
+         so it needs GenerateBindingRedirectsOutputType as well as
+         AutoGenerateBindingRedirects to actually emit the .dll.config file
+         that carries the redirect; an executable would not need the
+         former. See MIGRATION.md for what a consuming application needs. -->
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="xunit" Version="2.9.2" />

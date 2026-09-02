@@ -86,6 +86,84 @@ This is why the release is 2.0.0 rather than 1.1.
 | `Image2ZPL` package, Windows only | `Image2ZPL` core plus an adapter package |
 | No options | `ZplImageOptions` |
 
+## FileLoadException for System.Memory on .NET Framework
+
+If your application targets .NET Framework (for example `net472`) and you
+see this the first time you call into `Image2ZPL` or
+`Image2ZPL.SystemDrawing`:
+
+```
+System.IO.FileLoadException: Could not load file or assembly 'System.Memory,
+Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51' or one of
+its dependencies. The located assembly's manifest definition does not match
+the assembly reference.
+```
+
+The cause: on `netstandard2.0` (the build your .NET Framework project
+consumes) the core library references the `System.Memory` package for
+`ReadOnlySpan<byte>` support, which is not part of .NET Framework itself.
+.NET Core and .NET 5+ unify differing versions of the same assembly
+automatically at load time; .NET Framework does not. If any other component
+in your process already loaded a different version of `System.Memory` (or
+`System.Buffers`, `System.Numerics.Vectors`, or
+`System.Runtime.CompilerServices.Unsafe`, which `System.Memory` itself
+depends on), .NET Framework refuses to load the second, differently
+versioned copy and throws `FileLoadException` instead of silently picking
+one.
+
+The fix is a binding redirect, telling .NET Framework "any version of this
+assembly is fine, use the one you find." Most modern .NET Framework project
+templates (anything using `PackageReference` rather than `packages.config`)
+already set this by default. If yours does not, add it to your project
+file:
+
+```xml
+<PropertyGroup>
+  <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+</PropertyGroup>
+```
+
+If your project is an older `packages.config`-style project that does not
+support `AutoGenerateBindingRedirects`, or the automatic generation does not
+cover the specific version your process ends up loading, add the redirects
+to `app.config` (or `web.config`) by hand instead:
+
+```xml
+<configuration>
+  <runtime>
+    <assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
+      <dependentAssembly>
+        <assemblyIdentity name="System.Memory" publicKeyToken="cc7b13ffcd2ddd51" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-99.9.9.9" newVersion="4.0.2.0" />
+      </dependentAssembly>
+      <dependentAssembly>
+        <assemblyIdentity name="System.Buffers" publicKeyToken="cc7b13ffcd2ddd51" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-99.9.9.9" newVersion="4.0.4.0" />
+      </dependentAssembly>
+      <dependentAssembly>
+        <assemblyIdentity name="System.Numerics.Vectors" publicKeyToken="b03f5f7f11d50a3a" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-99.9.9.9" newVersion="4.1.5.0" />
+      </dependentAssembly>
+      <dependentAssembly>
+        <assemblyIdentity name="System.Runtime.CompilerServices.Unsafe" publicKeyToken="b03f5f7f11d50a3a" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-99.9.9.9" newVersion="6.0.1.0" />
+      </dependentAssembly>
+    </assemblyBinding>
+  </runtime>
+</configuration>
+```
+
+The exact `newVersion` values above match the `System.Memory 4.6.0` package
+that `Image2ZPL` currently references; if that reference is ever bumped, the
+versions above will need to move with it.
+
+Note that this is not something `Image2ZPL.SystemDrawing` (or
+`Image2ZPL` itself) can fix on your behalf by shipping its own binding
+redirects. A library's binding redirect config file, even if it had one,
+is not consulted for your process; only the top-level executable's own
+`app.config`/`web.config` (or its `AutoGenerateBindingRedirects` output) is.
+This has to live in your application.
+
 ## A note on the output format
 
 The output was described in 1.x documentation as "ZB64". That was

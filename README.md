@@ -141,6 +141,12 @@ System.Drawing adapter specifically). The ImageSharp adapter targets
 `netstandard2.0` build. If you are on .NET Framework, use the SkiaSharp or
 System.Drawing adapter.
 
+On .NET Framework, make sure your project has binding redirects enabled
+(`AutoGenerateBindingRedirects`, on by default in most modern project
+templates) so the `System.Memory` dependency resolves correctly at
+runtime. See [MIGRATION.md](MIGRATION.md#fileloadexception-for-systemmemory-on-net-framework)
+if you hit a `FileLoadException` naming `System.Memory`.
+
 ## Licence
 
 MIT. Note that `Image2ZPL.ImageSharp` depends on SixLabors.ImageSharp,
