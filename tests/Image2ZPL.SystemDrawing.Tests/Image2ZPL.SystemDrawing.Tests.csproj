@@ -33,6 +33,13 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <!-- Pin System.Memory explicitly. The test SDK resolves an older version
+         than the core library's netstandard2.0 asset asks for, and on .NET
+         Framework that mismatch surfaces as a runtime FileLoadException rather
+         than a build error. Naming the version here puts the conflict inside
+         this project's own reference graph, which is the only place
+         AutoGenerateBindingRedirects can see it and emit a redirect for it. -->
+    <PackageReference Include="System.Memory" Version="4.6.0" />
     <Reference Include="System.Drawing" />
     <!-- Provides the net472 reference assemblies so this target framework can
          compile on a non-Windows build machine, which has no .NET Framework
